@@ -131,7 +131,7 @@ def get_location_cross_table_latex(agg: pandas.DataFrame, start: str, end: str) 
 
 def main(start: str = date.today().replace(day=1), end: str = date.today().strftime(DATE_FORMAT), month: int = 0):
     """
-    Create a Latex booktabs cross-table from daily .csv from the beginning of the current
+    Create a Latex booktabs cross-table from daily .csv logs from the beginning of the current
     month until the current day.
 
 
@@ -144,8 +144,6 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
     With the --month flag the user can specify to get a report by month. For example
     --month 3 would result in a report compiled for all logs created in march.
     """
-    # TODO: Allow aggregation from date until today
-    # TODO: Allow aggregation of all logs over the whole time line
     assert month <= 12, "Months have to be specified by the number 1-12 (January-December)"
 
     if month != 0:
