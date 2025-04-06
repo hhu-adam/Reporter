@@ -6,8 +6,15 @@ import os
 import re
 import sys
 import time
+import calendar
+from datetime import date, datetime
+
 import typer
 import pandas
+
+
+class NoLogsFoundError(Exception):
+    pass
 
 
 def relative_path(rel_path: str) -> str:
@@ -20,12 +27,13 @@ DATE_FORMAT = "%Y-%m-%d"
 LOG_DIR = relative_path("../Logging/Location/logs")
 
 
-def get_interval_DataFrames(start_date, end_date) -> list[pandas.DataFrame]:
+def get_interval_DataFrames(start: str, end: str) -> list[pandas.DataFrame]:
     logs = []
+    start_date = time.strptime(start, DATE_FORMAT)
+    end_date = time.strptime(end, DATE_FORMAT)
 
     for _, __, files in os.walk(LOG_DIR):
         for file in files:
-            print(file)
             mtch = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', file)
 
             if mtch == None:
@@ -62,8 +70,10 @@ def merge_translations(old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pa
 
 
 def aggregate_over_interval(dfs: list[pandas.DataFrame]) -> pandas.DataFrame:
-    assert len(
-        dfs) > 0, "Provided list of DataFrames is empty. See if log files are available!"
+    if len(dfs) == 0:
+        raise NoLogsFoundError(
+            "Provided list of DataFrames is empty. See if log files are available for given time frame!")
+
     agg = dfs[0]
 
     if len(dfs) == 1:
@@ -91,7 +101,7 @@ def to_sum_cross_table(df: pandas.DataFrame) -> pandas.DataFrame:
     return hctab
 
 
-def get_location_cross_table_latex(agg: pandas.DataFrame) -> str:
+def get_location_cross_table_latex(agg: pandas.DataFrame, start: str, end: str) -> str:
 
     def sort_sum_cross_table(ctab: pandas.DataFrame) -> pandas.DataFrame:
         col_sum = ctab.sum(axis=0)
@@ -111,7 +121,7 @@ def get_location_cross_table_latex(agg: pandas.DataFrame) -> str:
     latex_table = re.sub(r"begin{tabular}\{.*\}",
                          "begin{tabular}{lrrrrrrrrrr}", latex_table)
     latex_table = re.sub(
-        r"toprule", "toprule ~multicolumn{11}{c}{~large ~textbf{Timeframe: From " + start_date + " to " + end_date + "}} ~\ ~toprule", latex_table)
+        r"toprule", "toprule ~multicolumn{11}{c}{~large ~textbf{Timeframe: From " + start + " to " + end + "}} ~\ ~toprule", latex_table)
     latex_table = latex_table.replace('~', '\\')
     latex_table = latex_table.replace('_', '\_')
     header = "\\documentclass{standalone} \n\\usepackage{booktabs} \n\\begin{document} \n"
@@ -119,24 +129,41 @@ def get_location_cross_table_latex(agg: pandas.DataFrame) -> str:
     return header + latex_table + footer
 
 
-def main():
+def main(start: str = date.today().replace(day=1), end: str = date.today().strftime(DATE_FORMAT), month: int = 0):
+    """
+    Create a Latex booktabs cross-table from daily .csv from the beginning of the current
+    month until the current day.
+
+
+    If no date is provided for the --end flag, a report is generated beginning from START
+    and ending at todays date.
+
+    If no date is provided for the --start flag, a report is generated beginning from the first day of the current 
+    month and ending at the END date.
+
+    With the --month flag the user can specify to get a report by month. For example
+    --month 3 would result in a report compiled for all logs created in march.
+    """
     # TODO: Allow aggregation from date until today
     # TODO: Allow aggregation of all logs over the whole time line
-    assert len(sys.argv) == 3, "You have to provide a start and end date!"
-    start_date = sys.argv[1]
-    end_date = sys.argv[2]
-    sts = time.strptime(start_date, DATE_FORMAT)
-    ets = time.strptime(end_date, DATE_FORMAT)
+    assert month <= 12, "Months have to be specified by the number 1-12 (January-December)"
 
-    dfs = get_interval_DataFrames(sts, ets)
-    agg = aggregate_over_interval(dfs)
+    if month != 0:
+        start = f"2025-{month}-01"
+        end_month = calendar.monthrange(datetime.now().year, month)[1]
+        end = f"2025-{month}-{end_month}"
 
-    latex_table = get_location_cross_table_latex(agg)
+    try:
+        dfs = get_interval_DataFrames(start, end)
+        agg = aggregate_over_interval(dfs)
+        latex_table = get_location_cross_table_latex(agg, start, end)
 
-    f = open(relative_path(
-        f"reports/report-{start_date}-{end_date}.tex"), mode='w')
-    f.write(latex_table)
-    f.close
+        f = open(relative_path(
+            f"reports/report-{start}-{end}.tex"), mode='w')
+        f.write(latex_table)
+        f.close
+    except NoLogsFoundError as no_logs:
+        print(no_logs, file=sys.stderr)
 
 
 if __name__ == "__main__":
