@@ -168,6 +168,7 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
     """
     date_formate = "%Y-%m-%d"
     log_dir = ""
+    log_files = []
 
     assert month <= 12, "Months have to be specified by the number 1-12 (January-December)."
 
