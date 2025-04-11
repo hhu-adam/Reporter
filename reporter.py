@@ -37,6 +37,12 @@ def extract_log_files(log_dir: str) -> list[str]:
     return logs
 
 
+def get_log_range(log_list: list[str]) -> tuple[str]:
+    start = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', log_list[0]).group()
+    end = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', log_list[-1]).group()
+    return start, end
+
+
 def get_all_DataFrames(log_files: list[str]) -> list[pandas.DataFrame]:
     data_frames = []
 
@@ -161,6 +167,7 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
     --month 3 would result in a report compiled for all logs created in march.
     """
     assert month <= 12, "Months have to be specified by the number 1-12 (January-December)."
+
     log_dir = ""
     try:
         log_dir = os.environ['LOG_DIR']
@@ -176,8 +183,13 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
         end_month = calendar.monthrange(datetime.now().year, month)[1]
         end = f"2025-{month}-{end_month}"
 
-    try:
+    if all:
+        start, end = get_log_range(log_files)
+        dfs = get_all_DataFrames(log_files)
+    else:
         dfs = get_interval_DataFrames(start, end, log_files, date_formate)
+
+    try:
         agg = aggregate_over_interval(dfs)
         latex_table = get_location_cross_table_latex(agg, start, end)
 
