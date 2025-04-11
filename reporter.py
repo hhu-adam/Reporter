@@ -73,6 +73,31 @@ def get_interval_DataFrames(start: str, end: str, log_files: list[str], date_for
     return data_frames
 
 
+def get_measured_dates(start: str, end: str, log_files: list[str], date_format: str) -> list[time.struct_time]:
+    dates = []
+    start = time.strptime(start, date_format)
+    end = time.strptime(end, date_format)
+
+    for log_file in log_files:
+        _match = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', log_file)
+
+        log_date: time.struct_time = time.strptime(
+            _match.group(0), date_format)
+        if log_date >= start and log_date <= end:
+            dates.append(log_date)
+
+    return dates
+
+
+def get_missing_dates(start: str, end: str, log_files: list[str], date_format: str) -> int:
+    measured_dates = len(get_measured_dates(
+        start, end, log_files, date_format))
+    start = time.strptime(start, date_format)
+    end = time.strptime(end, date_format)
+
+    return (end - start) - measured_dates
+
+
 def merge_translations(old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pandas.DataFrame:
     """
     Update n values by joining DataFrames w.r.t. country and game and
@@ -123,7 +148,7 @@ def to_sum_cross_table(df: pandas.DataFrame) -> pandas.DataFrame:
     return hctab
 
 
-def get_location_cross_table_latex(agg: pandas.DataFrame, start: str, end: str) -> str:
+def get_location_cross_table_latex(agg: pandas.DataFrame, start: str, end: str, measurement_ratio: tuple[int]) -> str:
 
     def sort_sum_cross_table(ctab: pandas.DataFrame) -> pandas.DataFrame:
         col_sum = ctab.sum(axis=0)
@@ -142,13 +167,21 @@ def get_location_cross_table_latex(agg: pandas.DataFrame, start: str, end: str) 
     latex_table = sorted_table.fillna('').to_latex(float_format="%.2f")
     latex_table = re.sub(r"begin{tabular}\{.*\}",
                          "begin{tabular}{lrrrrrrrrrr}", latex_table)
-    latex_table = re.sub(
-        r"toprule", "toprule ~multicolumn{11}{c}{~large ~textbf{Timeframe: From " + start + " to " + end + "}} ~\ ~toprule", latex_table)
-    latex_table = latex_table.replace('~', '\\')
+
+    # latex_table = re.sub(
+    #    r"toprule",
+    #    r"toprule \multicolumn{11}{c}{\large \textbf{Timeframe: From " + start + r" to " + end + r"}} \\ \toprule", latex_table)
+    # latex_table = latex_table.replace('~', '\\')
+
     latex_table = latex_table.replace('_', '\_')
-    header = "\\documentclass{standalone} \n\\usepackage{booktabs} \n\\begin{document} \n"
-    footer = "\\end{document}"
-    return header + latex_table + footer
+    header = r"\documentclass[varwidth=\maxdimen]{standalone} \usepackage{booktabs} \begin{document} "
+    preamble_1 = r"\begin{tabular}{rl} from: &" + \
+        start + r"\\ to: & " + end + r"\\ \end{tabular}"
+    preamble_2 = r"\hspace{10pt}days with reports: " + \
+        str(measurement_ratio[0]) + r"/" + \
+        str(measurement_ratio[1]) + r"\\[10pt]"
+    footer = r"\end{document}"
+    return header + preamble_1 + preamble_2 + latex_table + footer
 
 
 def main(start: str = date.today().replace(day=1), end: str = date.today().strftime("%Y-%m-%d"), month: str = "", full: bool = False):
@@ -197,8 +230,13 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
     else:
         dfs = get_interval_DataFrames(start, end, log_files, date_formate)
 
+    measured_days = len(get_measured_dates(
+        start, end, log_files, date_formate))
+    interval_days = (datetime.strptime(
+        end, date_formate) - datetime.strptime(start, date_formate)).days + 1
     agg = aggregate_over_interval(dfs)
-    latex_table = get_location_cross_table_latex(agg, start, end)
+    latex_table = get_location_cross_table_latex(
+        agg, start, end, (measured_days, interval_days))
 
     f = open(relative_path(
         f"reports/report-{start}-{end}.tex"), mode='w', encoding='utf_8')
