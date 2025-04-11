@@ -177,11 +177,13 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
     except KeyError as no_key:
         print(
             f"Environment variable {no_key} could not be found.", file=sys.stderr)
+        return
 
     try:
         log_files = extract_log_files(log_dir)
     except NoLogsFoundError as no_logs:
         print(no_logs, file=sys.stderr)
+        return
 
     if month != 0:
         start = f"2025-{month}-01"
