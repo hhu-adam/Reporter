@@ -23,28 +23,44 @@ def relative_path(rel_path: str) -> str:
     return os.path.join(script_dir, rel_path)
 
 
-DATE_FORMAT = "%Y-%m-%d"
-LOG_DIR = relative_path("../Logging/Location/logs")
-
-
-def get_interval_DataFrames(start: str, end: str) -> list[pandas.DataFrame]:
+def extract_log_files(log_dir: str) -> list[str]:
     logs = []
-    start_date = time.strptime(start, DATE_FORMAT)
-    end_date = time.strptime(end, DATE_FORMAT)
-
-    for _, __, files in os.walk(LOG_DIR):
+    for _, __, files in os.walk(log_dir):
         for file in files:
-            mtch = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', file)
+            _match = re.search(r'locations-[0-9]+-[0-9]+-[0-9]+\.log', file)
 
-            if mtch == None:
+            if _match is None:
                 continue
 
-            log_date = time.strptime(mtch.group(0), DATE_FORMAT)
-            if log_date >= start_date and log_date <= end_date:
-                df = pandas.read_csv(LOG_DIR + "/" + file, delimiter=';')
-                logs.append(df)
+            logs.append(log_dir + "/" + file)
 
     return logs
+
+
+def get_all_DataFrames(log_files: list[str]) -> list[pandas.DataFrame]:
+    data_frames = []
+
+    for log_file in log_files:
+        df = pandas.read_csv(log_file, delimiter=';')
+        data_frames.append(df)
+
+    return data_frames
+
+
+def get_interval_DataFrames(start: str, end: str, log_files: list[str], date_format: str) -> list[pandas.DataFrame]:
+    data_frames = []
+    start_date = time.strptime(start, date_format)
+    end_date = time.strptime(end, date_format)
+
+    for log_file in log_files:
+        _match = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', log_file)
+
+        log_date = time.strptime(_match.group(0), date_format)
+        if log_date >= start_date and log_date <= end_date:
+            df = pandas.read_csv(log_file, delimiter=';')
+            data_frames.append(df)
+
+    return data_frames
 
 
 def merge_translations(old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pandas.DataFrame:
@@ -129,7 +145,7 @@ def get_location_cross_table_latex(agg: pandas.DataFrame, start: str, end: str) 
     return header + latex_table + footer
 
 
-def main(start: str = date.today().replace(day=1), end: str = date.today().strftime(DATE_FORMAT), month: int = 0):
+def main(start: str = date.today().replace(day=1), end: str = date.today().strftime("%Y-%m-%d"), month: int = 0, all: bool = False):
     """
     Create a Latex booktabs cross-table from daily .csv logs from the beginning of the current
     month until the current day.
@@ -144,7 +160,16 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
     With the --month flag the user can specify to get a report by month. For example
     --month 3 would result in a report compiled for all logs created in march.
     """
-    assert month <= 12, "Months have to be specified by the number 1-12 (January-December)"
+    assert month <= 12, "Months have to be specified by the number 1-12 (January-December)."
+    log_dir = ""
+    try:
+        log_dir = os.environ['LOG_DIR']
+    except KeyError as no_key:
+        print(
+            f"Environment variable {no_key} could not be found.", file=sys.stderr)
+
+    date_formate = "%Y-%m-%d"
+    log_files = extract_log_files(log_dir)
 
     if month != 0:
         start = f"2025-{month}-01"
@@ -152,14 +177,13 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
         end = f"2025-{month}-{end_month}"
 
     try:
-        dfs = get_interval_DataFrames(start, end)
+        dfs = get_interval_DataFrames(start, end, log_files, date_formate)
         agg = aggregate_over_interval(dfs)
         latex_table = get_location_cross_table_latex(agg, start, end)
 
         f = open(relative_path(
-            f"reports/report-{start}-{end}.tex"), mode='w')
+            f"reports/report-{start}-{end}.tex"), mode='w', encoding='utf_8')
         f.write(latex_table)
-        f.close
     except NoLogsFoundError as no_logs:
         print(no_logs, file=sys.stderr)
 
