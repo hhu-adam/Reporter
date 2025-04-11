@@ -188,7 +188,7 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
             r'0[1-9]|1[0-2]', month) is not None, "Months have to be specified in the following format: 01, 02, ..., 09, 10, 11, 12"
 
         start = f"2025-{month}-01"
-        end_month = calendar.monthrange(datetime.now().year, month)[1]
+        end_month = calendar.monthrange(datetime.now().year, int(month))[1]
         end = f"2025-{month}-{end_month}"
 
     if full:
