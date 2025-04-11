@@ -34,6 +34,10 @@ def extract_log_files(log_dir: str) -> list[str]:
 
             logs.append(log_dir + "/" + file)
 
+    if len(logs) == 0:
+        raise NoLogsFoundError(
+            "No log files found. See if log files are available in your log directory")
+
     return logs
 
 
@@ -92,10 +96,6 @@ def merge_translations(old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pa
 
 
 def aggregate_over_interval(dfs: list[pandas.DataFrame]) -> pandas.DataFrame:
-    if len(dfs) == 0:
-        raise NoLogsFoundError(
-            "Provided list of DataFrames is empty. See if log files are available for given time frame!")
-
     agg = dfs[0]
 
     if len(dfs) == 1:
@@ -166,17 +166,21 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
     With the --month flag the user can specify to get a report by month. For example
     --month 3 would result in a report compiled for all logs created in march.
     """
+    date_formate = "%Y-%m-%d"
+    log_dir = ""
+
     assert month <= 12, "Months have to be specified by the number 1-12 (January-December)."
 
-    log_dir = ""
     try:
         log_dir = os.environ['LOG_DIR']
     except KeyError as no_key:
         print(
             f"Environment variable {no_key} could not be found.", file=sys.stderr)
 
-    date_formate = "%Y-%m-%d"
-    log_files = extract_log_files(log_dir)
+    try:
+        log_files = extract_log_files(log_dir)
+    except NoLogsFoundError as no_logs:
+        print(no_logs, file=sys.stderr)
 
     if month != 0:
         start = f"2025-{month}-01"
@@ -189,15 +193,12 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
     else:
         dfs = get_interval_DataFrames(start, end, log_files, date_formate)
 
-    try:
-        agg = aggregate_over_interval(dfs)
-        latex_table = get_location_cross_table_latex(agg, start, end)
+    agg = aggregate_over_interval(dfs)
+    latex_table = get_location_cross_table_latex(agg, start, end)
 
-        f = open(relative_path(
-            f"reports/report-{start}-{end}.tex"), mode='w', encoding='utf_8')
-        f.write(latex_table)
-    except NoLogsFoundError as no_logs:
-        print(no_logs, file=sys.stderr)
+    f = open(relative_path(
+        f"reports/report-{start}-{end}.tex"), mode='w', encoding='utf_8')
+    f.write(latex_table)
 
 
 if __name__ == "__main__":
