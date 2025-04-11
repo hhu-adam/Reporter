@@ -151,7 +151,7 @@ def get_location_cross_table_latex(agg: pandas.DataFrame, start: str, end: str) 
     return header + latex_table + footer
 
 
-def main(start: str = date.today().replace(day=1), end: str = date.today().strftime("%Y-%m-%d"), month: int = 0, all: bool = False):
+def main(start: str = date.today().replace(day=1), end: str = date.today().strftime("%Y-%m-%d"), month: str = "", full: bool = False):
     """
     Create a Latex booktabs cross-table from daily .csv logs from the beginning of the current
     month until the current day.
@@ -170,8 +170,6 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
     log_dir = ""
     log_files = []
 
-    assert month <= 12, "Months have to be specified by the number 1-12 (January-December)."
-
     try:
         log_dir = os.environ['LOG_DIR']
     except KeyError as no_key:
@@ -185,12 +183,15 @@ def main(start: str = date.today().replace(day=1), end: str = date.today().strft
         print(no_logs, file=sys.stderr)
         return
 
-    if month != 0:
+    if month != "":
+        assert re.search(
+            r'0[1-9]|1[0-2]', month) is not None, "Months have to be specified in the following format: 01, 02, ..., 09, 10, 11, 12"
+
         start = f"2025-{month}-01"
         end_month = calendar.monthrange(datetime.now().year, month)[1]
         end = f"2025-{month}-{end_month}"
 
-    if all:
+    if full:
         start, end = get_log_range(log_files)
         dfs = get_all_DataFrames(log_files)
     else:
