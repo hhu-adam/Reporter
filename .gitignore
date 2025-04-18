@@ -2,5 +2,7 @@
 .clj-kondo/
 .vscode/
 modules/__pycache__/
+modules/test_formatter.py
 reports/** 
 env/
+test_files/
