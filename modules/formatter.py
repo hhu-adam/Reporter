@@ -32,8 +32,8 @@ class Formatter:
 
         latex_table = latex_table.replace('_', '\_')
         header = r"\documentclass[varwidth=\maxdimen]{standalone} \usepackage{booktabs} \begin{document} "
-        preamble_1 = r"\begin{tabular}{rl} from: &" + \
-            self.start + r"\\ to: & " + self.end + r"\\ \end{tabular}"
+        preamble_1 = r"\begin{tabular}{rl} from: & " + \
+            self.start + r" \\ to: & " + self.end + r"\\ \end{tabular}"
         preamble_2 = r"\hspace{10pt}days with reports: " + \
             str(measured_days) + r"/" + \
             str(interval_days) + r"\\[10pt]"
