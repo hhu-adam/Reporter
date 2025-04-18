@@ -142,26 +142,10 @@ class LogCrawler(object):
 
         return earliest
 
-    def get_time_span(self) -> tuple[str]:
-        """
-        Return a tuple with the earliest and latest dates available
-        in the logs of the log directory
-        """
-
-        return self.get_latest(), self.get_earliest()
-
     def get_time_span(self) -> tuple[date]:
         """
         Return a tuple with the earliest and latest dates available
         in the logs of the log directory
         """
 
-        return self.get_latest(), self.get_earliest()
-
-    def get_time_span_strs(self) -> tuple[str]:
-        """
-        Return a tuple with the earliest and latest date strings available
-        in the logs of the log directory
-        """
-
-        return self.get_latest().strftime(self.date_format), self.get_earliest().strftime(self.date_format)
+        return self.get_earliest(), self.get_latest()
