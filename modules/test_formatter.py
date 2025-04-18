@@ -39,3 +39,7 @@ class TestFormatter(unittest.TestCase):
         _match = re.search("days with reports: 31/31", latex_table)
 
         self.assertIsNotNone(_match)
+
+
+if __name__ == '__main__':
+    unittest.main()

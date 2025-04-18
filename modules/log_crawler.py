@@ -5,7 +5,7 @@ Module docstring
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import date, datetime
 
 from pandas import DataFrame, read_csv
 
@@ -28,12 +28,11 @@ class LogCrawler(object):
     def __init__(self, log_dir: str, date_format: str) -> None:
         self.date_format = date_format
         self.log_dir: str = log_dir
+        self.logs = self._extract_log_files()
 
-        try:
-            self.logs: list[str] = self._extract_log_files()
-        except NoLogsFoundError as no_logs:
-            print(no_logs, file=sys.stderr)
-            return
+        if len(self.logs) == 0:
+            raise NoLogsFoundError(
+                "No log files found. See if log files are available in your log directory")
 
     def _extract_log_files(self) -> list[str]:
         """
@@ -51,10 +50,6 @@ class LogCrawler(object):
                     continue
 
                 logs.append(self.log_dir + "/" + file)
-
-        if len(logs) == 0:
-            raise NoLogsFoundError(
-                "No log files found. See if log files are available in your log directory")
 
         return logs
 
@@ -78,13 +73,13 @@ class LogCrawler(object):
         """
 
         data_frames = []
-        start_date = datetime.date.strptime(start, self.date_format).date()
+        start_date = datetime.strptime(start, self.date_format).date()
         end_date = datetime.strptime(end, self.date_format).date()
 
         for log_file in self.logs:
             _match = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', log_file)
-            log_date = datetime.date.strptime(
-                _match.group(0), self.date_format)
+            log_date = datetime.strptime(
+                _match.group(0), self.date_format).date()
 
             if log_date >= start_date and log_date <= end_date:
                 df = read_csv(log_file, delimiter=';')
@@ -92,19 +87,21 @@ class LogCrawler(object):
 
         return data_frames
 
-    def get_measured_dates(self, start: datetime.date, end: datetime.date) -> list[datetime.date]:
+    def get_measured_dates(self, start: str, end: str) -> list[date]:
         """
         Returns a list of dates corresponding to all available logs for the given time frame.
         """
 
         dates = []
+        start_date = datetime.strptime(start, self.date_format).date()
+        end_date = datetime.strptime(end, self.date_format).date()
 
         for log_file in self.logs:
             _match = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', log_file)
 
             log_date = datetime.strptime(
                 _match.group(0), self.date_format).date()
-            if log_date >= start and log_date <= end:
+            if log_date >= start_date and log_date <= end_date:
                 dates.append(log_date)
 
         return dates
