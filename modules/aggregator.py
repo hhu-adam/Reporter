@@ -1,6 +1,13 @@
 from pandas import DataFrame
 
 
+class NoLogsFoundError(Exception):
+    """
+    Simple Exception class indicating that no log-files
+    could be found by the LogCrawler.
+    """
+
+
 class Aggregator(object):
     def __init__(self) -> None:
         pass
@@ -10,6 +17,9 @@ class Aggregator(object):
         Returns a single DataFrame that is the results of
         merging and updating a list of DataFrames.
         """
+
+        if len(dfs) == 0:
+            raise NoLogsFoundError("No logs for given time frame found")
 
         agg = dfs[0]
 
