@@ -4,7 +4,7 @@ in several other modules.
 """
 
 import os
-from datetime import datetime
+from datetime import date
 
 
 def relative_path(cur_dir: str, rel_path: str) -> str:
@@ -18,7 +18,7 @@ def relative_path(cur_dir: str, rel_path: str) -> str:
     return os.path.join(script_dir, rel_path)
 
 
-def get_timeframe(start: datetime.date, end: datetime.date) -> int:
+def get_timeframe(start: date, end: date) -> int:
     """
     Inclusively return the days between the start and end date.
     """

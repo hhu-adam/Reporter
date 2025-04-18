@@ -16,7 +16,7 @@ from modules.formatter import Formatter
 from modules.utils import relative_path, get_timeframe
 
 
-def main(start: str = date.today().replace(day=1),
+def main(start: str = date.today().replace(day=1).strftime("%Y-%m-%d"),
          end: str = date.today().strftime("%Y-%m-%d"),
          month: str = "",
          full: bool = False):
@@ -47,10 +47,13 @@ def main(start: str = date.today().replace(day=1),
         end = f"2025-{month}-{end_month}"
 
     if full:
-        start, end = lc.get_time_span()
+        start, end = lc.get_time_span_strs()
         dfs = lc.extract_all_log_data_frames()
     else:
         dfs = lc.extract_log_data_frames(start, end)
+
+    start = datetime.strptime(start, date_f).date()
+    end = datetime.strptime(end, date_f).date()
 
     measured_days = len(lc.get_measured_dates(start, end))
     interval_days = get_timeframe(start, end)

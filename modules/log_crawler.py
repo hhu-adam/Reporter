@@ -4,7 +4,6 @@ Module docstring
 
 import os
 import re
-import sys
 from datetime import date, datetime
 
 from pandas import DataFrame, read_csv
@@ -87,21 +86,19 @@ class LogCrawler(object):
 
         return data_frames
 
-    def get_measured_dates(self, start: str, end: str) -> list[date]:
+    def get_measured_dates(self, start: date, end: date) -> list[date]:
         """
         Returns a list of dates corresponding to all available logs for the given time frame.
         """
 
         dates = []
-        start_date = datetime.strptime(start, self.date_format).date()
-        end_date = datetime.strptime(end, self.date_format).date()
 
         for log_file in self.logs:
             _match = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', log_file)
 
             log_date = datetime.strptime(
                 _match.group(0), self.date_format).date()
-            if log_date >= start_date and log_date <= end_date:
+            if log_date >= start and log_date <= end:
                 dates.append(log_date)
 
         return dates
@@ -117,7 +114,7 @@ class LogCrawler(object):
 
         return (end - start) - measured_dates
 
-    def get_latest(self) -> datetime.date:
+    def get_latest(self) -> date:
         """
         Return the latest date of a log in the log directory.
         """
@@ -132,7 +129,7 @@ class LogCrawler(object):
 
         return latest
 
-    def get_earliest(self) -> datetime.date:
+    def get_earliest(self) -> date:
         """
         Return the earliest date of a log in the log directory.
         """
@@ -147,10 +144,26 @@ class LogCrawler(object):
 
         return earliest
 
-    def get_time_span(self) -> tuple[datetime.date]:
+    def get_time_span(self) -> tuple[str]:
         """
         Return a tuple with the earliest and latest dates available
         in the logs of the log directory
         """
 
         return self.get_latest(), self.get_earliest()
+
+    def get_time_span(self) -> tuple[date]:
+        """
+        Return a tuple with the earliest and latest dates available
+        in the logs of the log directory
+        """
+
+        return self.get_latest(), self.get_earliest()
+
+    def get_time_span_strs(self) -> tuple[str]:
+        """
+        Return a tuple with the earliest and latest date strings available
+        in the logs of the log directory
+        """
+
+        return self.get_latest().strftime(self.date_format), self.get_earliest().strftime(self.date_format)
