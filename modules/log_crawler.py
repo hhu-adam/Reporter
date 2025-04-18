@@ -72,15 +72,13 @@ class LogCrawler(object):
         """
 
         data_frames = []
-        start_date = datetime.strptime(start, self.date_format).date()
-        end_date = datetime.strptime(end, self.date_format).date()
 
         for log_file in self.logs:
             _match = re.search(r'(?<=\-)\d+\-\d+\-\d+(?=.)', log_file)
             log_date = datetime.strptime(
                 _match.group(0), self.date_format).date()
 
-            if log_date >= start_date and log_date <= end_date:
+            if log_date >= start and log_date <= end:
                 df = read_csv(log_file, delimiter=';')
                 data_frames.append(df)
 
