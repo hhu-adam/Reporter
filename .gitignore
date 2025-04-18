@@ -2,7 +2,7 @@
 .clj-kondo/
 .vscode/
 modules/__pycache__/
-modules/test_formatter.py
+modules/test_log_crawler.py
 reports/** 
 env/
 test_files/
