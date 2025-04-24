@@ -92,10 +92,12 @@ def report(start: str = date.today().replace(day=1).strftime("%Y-%m-%d"),
         f = open(relative_path(__file__,
                             f"reports/report-{start}-{end}.tex"), mode='w', encoding='utf_8')
         f.write(latex_table)
+        print(f"Created report ./reports/report-{start}-{end}.tex")
     else:
         f = open(relative_path(__file__,
                             f"reports/report-{start}.tex"), mode='w', encoding='utf_8')
         f.write(latex_table)
+        print(f"Created report ./reports/report-{start}.tex")
 
 
 if __name__ == "__main__":
