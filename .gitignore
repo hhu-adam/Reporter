@@ -5,3 +5,4 @@ modules/__pycache__/
 modules/test_log_crawler.py
 reports/** 
 env/
+__pycache__/
