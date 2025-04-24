@@ -41,7 +41,7 @@ def full_flag(lc: LogCrawler) -> tuple[date, list]:
     return start, end, dfs
 
 
-def main(start: str = date.today().replace(day=1).strftime("%Y-%m-%d"),
+def report(start: str = date.today().replace(day=1).strftime("%Y-%m-%d"),
          end: str = date.today().strftime("%Y-%m-%d"),
          month: str = "",
          full: bool = False):
@@ -65,8 +65,8 @@ def main(start: str = date.today().replace(day=1).strftime("%Y-%m-%d"),
     date_f = "%Y-%m-%d"
     lc = LogCrawler(log_dir=os.environ['LOG_DIR'], date_format=date_f)
     ag = Aggregator()
-    start = datetime.strptime(start, date_f)
-    end = datetime.strptime(end, date_f)
+    start: date = datetime.strptime(start, date_f).date()
+    end: date = datetime.strptime(end, date_f).date()
     dfs = []
 
     if month != "":
@@ -88,10 +88,15 @@ def main(start: str = date.today().replace(day=1).strftime("%Y-%m-%d"),
 
     latex_table = fm.generate_report(measured_days, interval_days)
 
-    f = open(relative_path(__file__,
-                           f"reports/report-{start}-{end}.tex"), mode='w', encoding='utf_8')
-    f.write(latex_table)
+    if start != end:
+        f = open(relative_path(__file__,
+                            f"reports/report-{start}-{end}.tex"), mode='w', encoding='utf_8')
+        f.write(latex_table)
+    else:
+        f = open(relative_path(__file__,
+                            f"reports/report-{start}.tex"), mode='w', encoding='utf_8')
+        f.write(latex_table)
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    typer.run(report)
