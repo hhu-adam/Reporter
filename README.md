@@ -10,6 +10,12 @@ Generate a report beginning at the first date of the current month until current
 python3 reporter.py
 ```
 
+Generate a report over all available log files.
+
+```bash
+python3 reporter.py --full
+```
+
 Generate a report beginning at the first date of the current month until a specified day.
 ```bash
 python3 reporter.py --end 20XX-XX-XX
