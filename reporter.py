@@ -58,6 +58,9 @@ def main(start: str = date.today().replace(day=1).strftime("%Y-%m-%d"),
 
     With the --month flag the user can specify to get a report by month. For example
     --month 3 would result in a report compiled for all logs created in march.
+
+    The --full flag can only be used on its own and provides a report over all available log
+    files.
     """
     date_f = "%Y-%m-%d"
     lc = LogCrawler(log_dir=os.environ['LOG_DIR'], date_format=date_f)
