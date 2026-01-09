@@ -25,10 +25,12 @@ class Formatter:
         Generates a latex file showing a sorted cross tab.
         """
 
-        c_tab = self.get_cross_table(self.agg)
+        c_tab = self.get_cross_table(self.agg) 
         latex_table = c_tab.fillna('').to_latex(float_format="%.2f")
+        right_bounded_columns = (len(c_tab.columns))
+        tabular_header = "begin{tabular}" + "{" +  "l" + "r"*right_bounded_columns +"}"
         latex_table = re.sub(r"begin{tabular}\{.*\}",
-                             "begin{tabular}{lrrrrrrrrrr}", latex_table)
+                             tabular_header, latex_table)
 
         latex_table = latex_table.replace('_', '\_')
         header = r"\documentclass[varwidth=\maxdimen]{standalone} \usepackage{booktabs} \begin{document} "
